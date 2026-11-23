@@ -1,0 +1,193 @@
+/* ==========================================================================
+   Cactus — animação de abertura do logo, antes da tela de login
+   Só HTML e CSS. Todos os tempos e tamanhos ajustáveis ficam no :root.
+   ========================================================================== */
+
+:root {
+    /* --- Tamanho -----------------------------------------------------------
+       Lado do quadrado. A palavra é calculada a partir dele, então a escala
+       inteira da marca muda só aqui. */
+    --logo-size: clamp(56px, 5vw, 76px);
+
+    /* --- Cores ------------------------------------------------------------- */
+    --cor-marca: #0021af;
+    --cor-abertura: #ffffff;
+
+    /* --- Curvas ------------------------------------------------------------
+       --curva-entrada é compartilhada com a login e fica em style.css */
+    --curva-cortina: cubic-bezier(0.76, 0, 0.24, 1);
+
+    /* --- Tempos (na ordem da sequência) ------------------------------------ */
+    --logo-inicio: 0s;
+    --logo-duracao: 0.6s;
+
+    --quadrado-inicio: 1.2s;
+    --quadrado-duracao: 0.7s;
+
+    --espaco-inicio: 2s;
+    --espaco-duracao: 0.8s;
+
+    --letras-inicio: 2.15s;
+    --letras-intervalo: 70ms;
+    --letras-duracao: 0.6s;
+
+    --cortina-inicio: 4s;
+    --cortina-duracao: 0.9s;
+}
+
+/* ==========================================================================
+   Camada da abertura
+   Fica por cima da login; no final sobe como uma cortina.
+   ========================================================================== */
+
+.abertura {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: grid;
+    place-items: center;
+    background: var(--cor-abertura);
+    animation: cortina var(--cortina-duracao) var(--curva-cortina) var(--cortina-inicio) both;
+}
+
+/* Etapas 6 e 7: a camada inteira desliza para cima e, no último quadro, deixa
+   de existir para cliques e foco (visibility + pointer-events) */
+@keyframes cortina {
+    from {
+        transform: translateY(0);
+    }
+    to {
+        transform: translateY(-100%);
+        visibility: hidden;
+        pointer-events: none;
+    }
+}
+
+/* ==========================================================================
+   Marca: símbolo + palavra (desenhos de img/icone.svg e img/logo.svg)
+   O .marca é centralizado pela .abertura e tem a largura do seu conteúdo.
+   Quando a palavra ganha largura, o conjunto continua centralizado e o
+   símbolo é empurrado para a esquerda naturalmente.
+   ========================================================================== */
+
+.marca {
+    display: flex;
+    align-items: center;
+}
+
+/* Etapa 1: o ícone verde entra sozinho (fade + leve crescimento) e fica
+   parado até o quadrado abrir. As duas camadas ocupam a mesma célula. */
+.marca__simbolo {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: var(--logo-size);
+    height: var(--logo-size);
+    animation: logo-entrada var(--logo-duracao) var(--curva-entrada) var(--logo-inicio) both;
+}
+
+.marca__icone,
+.marca__quadrado {
+    display: block;
+    grid-area: 1 / 1;
+    height: 100%;
+}
+
+/* O ícone tem 72 × 80 e o quadrado 80 × 80: centralizado, o cacto verde fica
+   exatamente sobre o cacto branco do logo. */
+.marca__icone {
+    width: calc(var(--logo-size) * 72 / 80);
+}
+
+/* Etapa 2: o quadrado azul e verde abre do centro para os lados, por cima do
+   ícone. Fora do recorte o cacto segue verde; dentro dele já é branco. */
+.marca__quadrado {
+    width: 100%;
+    animation: quadrado-abre var(--quadrado-duracao) var(--curva-cortina) var(--quadrado-inicio) both;
+}
+
+@keyframes quadrado-abre {
+    from {
+        clip-path: inset(0 50%);
+    }
+    to {
+        clip-path: inset(0 0);
+    }
+}
+
+@keyframes logo-entrada {
+    from {
+        opacity: 0;
+        transform: scale(0.85);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Etapa 3: abertura de espaço.
+   A coluna do grid vai de 0fr a 1fr, ou seja, de largura zero até a largura
+   natural da palavra, sem precisar saber essa largura em px. */
+.marca__palavra {
+    display: grid;
+    grid-template-columns: 0fr;
+    animation: espaco-abre var(--espaco-duracao) var(--curva-entrada) var(--espaco-inicio) both;
+}
+
+@keyframes espaco-abre {
+    from {
+        grid-template-columns: 0fr;
+    }
+    to {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Filho direto do grid: min-width 0 deixa a coluna encolher até zero e o
+   overflow esconde o que ainda não coube. */
+.marca__mascara {
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* A parte do logo à direita do quadrado (182 × 80 unidades). O espaço entre
+   quadrado e palavra já está no desenho, dentro da coluna que cresce. O SVG
+   recorta o que sai dele e funciona como máscara para as letras que sobem. */
+.marca__letras {
+    display: block;
+    width: calc(var(--logo-size) * 182 / 80);
+    height: var(--logo-size);
+    fill: var(--cor-marca);
+}
+
+/* Etapa 4: cada letra sobe de baixo, escalonada pelo índice --i.
+   Etapa 5: com a última letra no lugar, a marca completa fica parada até
+   a cortina começar.
+   Com transform-box: view-box, o 110% é relativo à altura do SVG. */
+.marca__letra {
+    transform-box: view-box;
+    animation: letra-sobe var(--letras-duracao) var(--curva-entrada)
+        calc(var(--letras-inicio) + var(--i) * var(--letras-intervalo)) both;
+}
+
+@keyframes letra-sobe {
+    from {
+        opacity: 0;
+        transform: translateY(110%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   Movimento reduzido: sem abertura (a login cuida do próprio fade)
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .abertura {
+        display: none;
+    }
+}

@@ -1,0 +1,498 @@
+/* ==========================================================================
+   Cactus — tela de login
+   Só HTML e CSS. Tamanhos e tempos ajustáveis ficam no :root abaixo.
+   ========================================================================== */
+
+:root {
+    /* --- Cores ------------------------------------------------------------- */
+    --cor-branco: #ffffff;
+    --cor-texto: #0b1533;
+    --cor-texto-suave: #5b6478;
+    --cor-linha: #c9cfdf;
+    --cor-azul: #0021af;
+    --cor-azul-escuro: #001a8a;
+    --cor-hover-claro: #eef1f9;
+    --cor-branco-suave: rgb(255 255 255 / 0.78);
+
+    /* --- Topo --------------------------------------------------------------
+       --topo-margem é a distância de logo, botões e cartão às bordas da tela.
+       O cartão nasce do botão "Entrar", então depende dessas três medidas. */
+    --topo-margem: clamp(24px, 3vw, 48px);
+    --botao-topo-altura: 40px;
+    --entrar-largura: 96px;
+    --topo-espaco: 8px;
+
+    /* Largura do logo. A imagem (484 × 198) tem o quadrado no centro vertical,
+       então centralizar a imagem inteira na altura dos botões alinha o quadrado. */
+    --login-logo-largura: clamp(112px, 9vw, 148px);
+    --login-logo-altura: calc(var(--login-logo-largura) * 198 / 484);
+
+    /* --- Cartão ------------------------------------------------------------ */
+    --cartao-largura: clamp(360px, 30vw, 440px);
+    --cartao-raio: 20px;
+    --cartao-respiro: clamp(32px, 3vw, 48px); /* padding lateral e inferior */
+
+    /* --- Tempos do cartão --------------------------------------------------
+       --cortina-inicio e --cortina-duracao vêm de css/animation.css: o cartão
+       acompanha sozinho qualquer mudança nos tempos da abertura. */
+    --cartao-pausa: 0.3s; /* depois do fim da cortina */
+    --cartao-inicio: calc(var(--cortina-inicio) + var(--cortina-duracao) + var(--cartao-pausa));
+
+    --florescer-duracao: 1.1s;
+    --curva-florescer: cubic-bezier(0.65, 0, 0.35, 1);
+
+    --conteudo-pausa: 0.15s; /* depois do fim do florescer */
+    --conteudo-inicio: calc(var(--cartao-inicio) + var(--florescer-duracao) + var(--conteudo-pausa));
+
+    --titulo-duracao: 0.7s;
+
+    --itens-inicio: calc(var(--conteudo-inicio) + 0.15s); /* subtítulo, campos e botão */
+    --itens-intervalo: 60ms;
+    --itens-duracao: 0.5s;
+
+    /* --- Boas-vindas -------------------------------------------------------
+       Texto grande à esquerda. Entra com o logo, enquanto a cortina sobe
+       (--login-inicio vem de style.css), uma linha de cada vez. */
+    --boas-vindas-fonte: clamp(40px, 6vw, 112px);
+    --boas-vindas-texto-fonte: clamp(16px, 1.35vw, 22px);
+    --boas-vindas-inicio: var(--login-inicio);
+    --boas-vindas-duracao: 0.9s;
+    --boas-vindas-intervalo: 90ms;
+    --boas-vindas-texto-inicio: calc(var(--boas-vindas-inicio) + 0.35s); /* linha de apoio */
+    --boas-vindas-texto-duracao: 0.6s;
+}
+
+/* Telas estreitas: margem de 16px e logo/botões um pouco menores para caber
+   tudo numa linha. O cartão continua preso ao botão "Entrar". */
+@media (max-width: 720px) {
+    :root {
+        --topo-margem: 16px;
+        --login-logo-largura: 88px;
+        --cartao-respiro: 24px;
+    }
+}
+
+/* ==========================================================================
+   Fundo: a imagem cobre a tela inteira, cortando o excesso sem distorcer.
+   A cor da login fica por baixo enquanto a imagem carrega.
+   ========================================================================== */
+
+.login {
+    background: var(--cor-login) url("../img/bg.jpg") center / cover no-repeat;
+}
+
+/* ==========================================================================
+   Logo no canto superior esquerdo, centralizado na altura dos botões do topo.
+   Entra junto com a login (animação em style.css).
+   ========================================================================== */
+
+.login__logo {
+    position: absolute;
+    top: calc(var(--topo-margem) + (var(--botao-topo-altura) - var(--login-logo-altura)) / 2);
+    left: var(--topo-margem);
+    z-index: 3;
+    display: block;
+    width: var(--login-logo-largura);
+    height: var(--login-logo-altura);
+    animation: login-entrada var(--login-duracao) var(--curva-entrada) var(--login-inicio) both;
+}
+
+/* ==========================================================================
+   Boas-vindas no canto inferior esquerdo
+   A base se alinha ao respiro interno do cartão. A largura máxima deixa o
+   texto sempre à esquerda do cartão, com uma margem entre os dois.
+   ========================================================================== */
+
+.boas-vindas {
+    position: absolute;
+    bottom: calc(var(--topo-margem) + var(--cartao-respiro));
+    left: var(--topo-margem);
+    z-index: 1;
+    max-width: calc(100% - var(--cartao-largura) - var(--topo-margem) * 3);
+    color: var(--cor-branco);
+}
+
+.boas-vindas__titulo {
+    margin: 0;
+    font-family: "Poppins", system-ui, sans-serif;
+    font-weight: 500;
+    font-size: var(--boas-vindas-fonte);
+    line-height: 1.02;
+    letter-spacing: -0.02em;
+}
+
+/* Linha de apoio: bem menor que o título, em branco translúcido */
+.boas-vindas__texto {
+    max-width: 30ch;
+    margin: clamp(16px, 1.6vw, 28px) 0 0;
+    color: var(--cor-branco-suave);
+    font-size: var(--boas-vindas-texto-fonte);
+    line-height: 1.4;
+}
+
+/* Cada linha tem a sua máscara. O padding dá folga para ascendentes e
+   descendentes e a margem negativa devolve o espaço. */
+.boas-vindas__mascara {
+    display: block;
+    margin: -0.1em 0;
+    padding: 0.1em 0;
+    overflow: hidden;
+}
+
+.boas-vindas__linha {
+    display: block;
+    white-space: nowrap;
+}
+
+/* Em telas estreitas o cartão ocupa a largura toda e cobriria o texto */
+@media (max-width: 720px) {
+    .boas-vindas {
+        display: none;
+    }
+}
+
+/* ==========================================================================
+   Botões do topo
+   Ficam acima do cartão. No estado final são brancos sobre o cartão branco e
+   parecem texto dentro dele.
+   ========================================================================== */
+
+.topo {
+    position: absolute;
+    top: var(--topo-margem);
+    right: var(--topo-margem);
+    z-index: 3;
+    display: flex;
+    gap: var(--topo-espaco);
+}
+
+.topo__botao {
+    height: var(--botao-topo-altura);
+    padding: 0 20px;
+    border: 0;
+    border-radius: calc(var(--botao-topo-altura) / 2);
+    background: var(--cor-branco);
+    color: var(--cor-texto);
+    font-family: "Poppins", system-ui, sans-serif;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.topo__botao--entrar {
+    width: var(--entrar-largura);
+    padding: 0;
+    text-align: center;
+}
+
+.topo__botao:hover {
+    background: var(--cor-hover-claro);
+}
+
+/* Anel azul com uma folga branca: aparece tanto sobre a foto quanto sobre o
+   cartão branco. */
+.topo__botao:focus-visible {
+    outline: 2px solid var(--cor-azul);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px var(--cor-branco);
+}
+
+/* ==========================================================================
+   Cartão
+   Já fica no tamanho e na posição finais: o canto superior direito coincide
+   com o do botão "Entrar" e ele desce até --topo-margem acima do fim da tela.
+   A animação só muda a área visível (clip-path), por isso não tem sombra:
+   uma box-shadow seria recortada junto.
+   ========================================================================== */
+
+.cartao {
+    position: absolute;
+    top: var(--topo-margem);
+    right: var(--topo-margem);
+    bottom: var(--topo-margem);
+    z-index: 2;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: var(--cartao-largura);
+    padding: calc(var(--botao-topo-altura) + var(--cartao-respiro)) var(--cartao-respiro)
+        var(--cartao-respiro);
+    overflow-y: auto;
+    border-radius: var(--cartao-raio);
+    background: var(--cor-branco);
+    color: var(--cor-texto);
+}
+
+/* Telas estreitas: o cartão ocupa a largura toda e passaria por cima do logo
+   branco. O logo vai para baixo do cartão e é coberto quando ele abre. */
+@media (max-width: 720px) {
+    .cartao {
+        left: var(--topo-margem);
+        width: auto;
+    }
+
+    .login__logo {
+        z-index: 1;
+    }
+}
+
+/* margin-block auto centraliza o formulário no espaço abaixo dos botões;
+   em telas baixas as margens zeram e o cartão rola. */
+.cartao__form {
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+    margin-block: auto;
+}
+
+.cartao__cabecalho {
+    margin-bottom: 12px;
+}
+
+/* Máscara do título: o padding dá folga para ascendentes e descendentes e a
+   margem negativa devolve o espaço, então o layout não muda. */
+.cartao__titulo-mascara {
+    display: block;
+    margin: -0.12em 0;
+    padding: 0.12em 0;
+    overflow: hidden;
+}
+
+.cartao__titulo {
+    display: block;
+    margin: 0;
+    font-family: "Poppins", system-ui, sans-serif;
+    font-weight: 500;
+    font-size: 40px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    text-wrap: balance; /* "Boas-vindas / de volta", sem palavra sozinha */
+}
+
+.cartao__subtitulo {
+    margin: 12px 0 0;
+    color: var(--cor-texto-suave);
+    font-size: 15px;
+    line-height: 1.4;
+}
+
+/* Telas baixas: menos espaço vertical para tudo caber sem rolar o cartão */
+@media (max-height: 760px) {
+    .cartao {
+        padding-top: calc(var(--botao-topo-altura) + 24px);
+        padding-bottom: 24px;
+    }
+
+    .cartao__form {
+        gap: 18px;
+    }
+
+    .cartao__cabecalho {
+        margin-bottom: 4px;
+    }
+
+    .cartao__titulo {
+        font-size: 34px;
+    }
+}
+
+/* Rodapé preso ao fim do cartão; o formulário centraliza no espaço acima */
+.cartao__rodape {
+    margin: 24px 0 0;
+    color: var(--cor-texto-suave);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+/* Link do rodapé: azul do botão, em negrito e sem sublinhado */
+.cartao__link {
+    color: var(--cor-azul);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.cartao__link:hover {
+    color: var(--cor-azul-escuro);
+}
+
+.cartao__link:focus-visible {
+    outline: 2px solid var(--cor-azul);
+    outline-offset: 2px;
+    border-radius: 2px;
+}
+
+/* --- Campos --------------------------------------------------------------- */
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.campo__rotulo {
+    color: var(--cor-texto);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+/* Sem caixa: só uma linha inferior fina. No foco ela fica azul e ganha mais
+   1px por baixo (box-shadow), sem mexer no layout. */
+.campo__input {
+    width: 100%;
+    padding: 8px 0;
+    border: 0;
+    border-bottom: 1px solid var(--cor-linha);
+    border-radius: 0;
+    background: transparent;
+    color: var(--cor-texto);
+    font: inherit;
+    font-size: 16px;
+}
+
+.campo__input:focus {
+    outline: none;
+}
+
+.campo__input:focus-visible {
+    border-bottom-color: var(--cor-azul);
+    box-shadow: 0 1px 0 var(--cor-azul);
+}
+
+/* --- Botão de enviar ------------------------------------------------------ */
+
+.botao {
+    width: 100%;
+    height: 52px;
+    margin-top: 8px;
+    border: 0;
+    border-radius: 26px;
+    background: var(--cor-azul);
+    color: var(--cor-branco);
+    font-family: "Poppins", system-ui, sans-serif;
+    font-weight: 500;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.botao:hover {
+    background: var(--cor-azul-escuro);
+}
+
+.botao:focus-visible {
+    outline: 2px solid var(--cor-azul);
+    outline-offset: 3px;
+}
+
+/* ==========================================================================
+   Animação das boas-vindas
+   Cada linha sobe de dentro da sua máscara, escalonada pelo índice --i.
+   ========================================================================== */
+
+.boas-vindas__linha {
+    animation: boas-vindas-sobe var(--boas-vindas-duracao) var(--curva-entrada)
+        calc(var(--boas-vindas-inicio) + var(--i) * var(--boas-vindas-intervalo)) both;
+}
+
+@keyframes boas-vindas-sobe {
+    from {
+        opacity: 0;
+        transform: translateY(105%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* A linha de apoio entra logo depois, com o mesmo movimento curto dos itens
+   do cartão */
+.boas-vindas__texto {
+    animation: cartao-item-entra var(--boas-vindas-texto-duracao) var(--curva-entrada)
+        var(--boas-vindas-texto-inicio) both;
+}
+
+/* ==========================================================================
+   Animação de entrada do cartão
+   ========================================================================== */
+
+/* Etapa 1 (pausa): até --cartao-inicio o cartão fica recortado na pílula do
+   botão "Entrar", escondido exatamente atrás dele.
+   Etapa 2 (florescer): num único movimento contínuo, a pílula cresce para
+   baixo e para a esquerda ao mesmo tempo até virar o cartão inteiro. */
+.cartao {
+    animation: cartao-florescer var(--florescer-duracao) var(--curva-florescer) var(--cartao-inicio)
+        both;
+}
+
+@keyframes cartao-florescer {
+    /* Pílula do tamanho e na posição do botão "Entrar" */
+    from {
+        clip-path: inset(
+            0 0 calc(100% - var(--botao-topo-altura)) calc(100% - var(--entrar-largura))
+                round calc(var(--botao-topo-altura) / 2)
+        );
+    }
+    to {
+        clip-path: inset(0 0 0 0 round var(--cartao-raio));
+    }
+}
+
+/* Etapa 3a: o título sobe de dentro da máscara, como as letras de "cactus" */
+.cartao__titulo {
+    animation: cartao-titulo-sobe var(--titulo-duracao) var(--curva-entrada) var(--conteudo-inicio)
+        both;
+}
+
+@keyframes cartao-titulo-sobe {
+    from {
+        opacity: 0;
+        transform: translateY(105%);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Etapa 3b: subtítulo, campos e botão entram em sequência pelo índice --i */
+.cartao__item {
+    animation: cartao-item-entra var(--itens-duracao) var(--curva-entrada)
+        calc(var(--itens-inicio) + var(--i) * var(--itens-intervalo)) both;
+}
+
+@keyframes cartao-item-entra {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================================================
+   Movimento reduzido: a abertura some (css/animation.css) e logo e cartão
+   aparecem prontos, com o mesmo fade curto da login (login-fade, style.css).
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+    .login__logo,
+    .boas-vindas,
+    .cartao {
+        animation: login-fade 0.2s ease-out both;
+    }
+
+    .boas-vindas__linha,
+    .boas-vindas__texto {
+        animation: none;
+    }
+
+    .cartao__titulo,
+    .cartao__item {
+        animation: none;
+    }
+}
