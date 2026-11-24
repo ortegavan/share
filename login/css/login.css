@@ -14,45 +14,35 @@
     --cor-hover-claro: #eef1f9;
     --cor-branco-suave: rgb(255 255 255 / 0.78);
 
+    /* --- Fundo -------------------------------------------------------------
+       Filtro azul sobre a foto, opacidade do filtro (1 = azul total, valores
+       menores deixam a foto aparecer mais) e desfoque (0px desliga). */
+    --cor-fundo-filtro: #0021af;
+    --fundo-filtro-opacidade: 0.6;
+    --fundo-desfoque: 3px;
+
     /* --- Topo --------------------------------------------------------------
        --topo-margem é a distância de logo, botões e cartão às bordas da tela.
-       O cartão nasce do botão "Entrar", então depende dessas três medidas. */
+       O cartão tem o canto superior direito no do botão "Entrar". */
     --topo-margem: clamp(24px, 3vw, 48px);
     --botao-topo-altura: 40px;
     --entrar-largura: 96px;
     --topo-espaco: 8px;
 
-    /* Largura do logo. A imagem (484 × 198) tem o quadrado no centro vertical,
-       então centralizar a imagem inteira na altura dos botões alinha o quadrado. */
+    /* Largura do logo. O SVG (356 × 151) tem o cacto no centro vertical, então
+       centralizar a imagem inteira na altura dos botões alinha o cacto. */
     --login-logo-largura: clamp(112px, 9vw, 148px);
-    --login-logo-altura: calc(var(--login-logo-largura) * 198 / 484);
+    --login-logo-altura: calc(var(--login-logo-largura) * 151 / 356);
 
     /* --- Cartão ------------------------------------------------------------ */
     --cartao-largura: clamp(360px, 30vw, 440px);
     --cartao-raio: 20px;
     --cartao-respiro: clamp(32px, 3vw, 48px); /* padding lateral e inferior */
 
-    /* --- Tempos do cartão --------------------------------------------------
-       --cortina-inicio e --cortina-duracao vêm de css/animation.css: o cartão
-       acompanha sozinho qualquer mudança nos tempos da abertura. */
-    --cartao-pausa: 0.3s; /* depois do fim da cortina */
-    --cartao-inicio: calc(var(--cortina-inicio) + var(--cortina-duracao) + var(--cartao-pausa));
-
-    --florescer-duracao: 1.1s;
-    --curva-florescer: cubic-bezier(0.65, 0, 0.35, 1);
-
-    --conteudo-pausa: 0.15s; /* depois do fim do florescer */
-    --conteudo-inicio: calc(var(--cartao-inicio) + var(--florescer-duracao) + var(--conteudo-pausa));
-
-    --titulo-duracao: 0.7s;
-
-    --itens-inicio: calc(var(--conteudo-inicio) + 0.15s); /* subtítulo, campos e botão */
-    --itens-intervalo: 60ms;
-    --itens-duracao: 0.5s;
-
     /* --- Boas-vindas -------------------------------------------------------
        Texto grande à esquerda. Entra com o logo, enquanto a cortina sobe
-       (--login-inicio vem de style.css), uma linha de cada vez. */
+       (--login-inicio vem de style.css), uma linha de cada vez. É só
+       decorativo: o cartão já está pronto e o login funciona durante ele. */
     --boas-vindas-fonte: clamp(40px, 6vw, 112px);
     --boas-vindas-texto-fonte: clamp(16px, 1.35vw, 22px);
     --boas-vindas-inicio: var(--login-inicio);
@@ -77,8 +67,33 @@
    A cor da login fica por baixo enquanto a imagem carrega.
    ========================================================================== */
 
+/* A foto fica num pseudo-elemento para o desfoque não afetar o conteúdo.
+   Ela mantém as cores originais e o azul por cima, em multiply, tinge tudo;
+   a opacidade do filtro controla quanto das cores da foto continua visível.
+   O inset negativo esconde a borda clara que o blur cria nas bordas. */
 .login {
-    background: var(--cor-login) url("../img/bg.jpg") center / cover no-repeat;
+    isolation: isolate;
+    overflow: hidden;
+}
+
+.login::before,
+.login::after {
+    content: "";
+    position: absolute;
+    z-index: -1;
+}
+
+.login::before {
+    inset: calc(var(--fundo-desfoque) * -3);
+    background: url("../img/bg.jpg") center / cover no-repeat;
+    filter: blur(var(--fundo-desfoque));
+}
+
+.login::after {
+    inset: 0;
+    background: var(--cor-fundo-filtro);
+    opacity: var(--fundo-filtro-opacidade);
+    mix-blend-mode: multiply;
 }
 
 /* ==========================================================================
@@ -201,10 +216,9 @@
 
 /* ==========================================================================
    Cartão
-   Já fica no tamanho e na posição finais: o canto superior direito coincide
-   com o do botão "Entrar" e ele desce até --topo-margem acima do fim da tela.
-   A animação só muda a área visível (clip-path), por isso não tem sombra:
-   uma box-shadow seria recortada junto.
+   Sem animação própria: aparece montado quando a cortina da abertura sobe.
+   O canto superior direito coincide com o do botão "Entrar" e ele desce até
+   --topo-margem acima do fim da tela.
    ========================================================================== */
 
 .cartao {
@@ -249,15 +263,6 @@
 
 .cartao__cabecalho {
     margin-bottom: 12px;
-}
-
-/* Máscara do título: o padding dá folga para ascendentes e descendentes e a
-   margem negativa devolve o espaço, então o layout não muda. */
-.cartao__titulo-mascara {
-    display: block;
-    margin: -0.12em 0;
-    padding: 0.12em 0;
-    overflow: hidden;
 }
 
 .cartao__titulo {
@@ -407,63 +412,13 @@
     }
 }
 
-/* A linha de apoio entra logo depois, com o mesmo movimento curto dos itens
-   do cartão */
+/* A linha de apoio entra logo depois, com um movimento curto */
 .boas-vindas__texto {
-    animation: cartao-item-entra var(--boas-vindas-texto-duracao) var(--curva-entrada)
+    animation: boas-vindas-texto-entra var(--boas-vindas-texto-duracao) var(--curva-entrada)
         var(--boas-vindas-texto-inicio) both;
 }
 
-/* ==========================================================================
-   Animação de entrada do cartão
-   ========================================================================== */
-
-/* Etapa 1 (pausa): até --cartao-inicio o cartão fica recortado na pílula do
-   botão "Entrar", escondido exatamente atrás dele.
-   Etapa 2 (florescer): num único movimento contínuo, a pílula cresce para
-   baixo e para a esquerda ao mesmo tempo até virar o cartão inteiro. */
-.cartao {
-    animation: cartao-florescer var(--florescer-duracao) var(--curva-florescer) var(--cartao-inicio)
-        both;
-}
-
-@keyframes cartao-florescer {
-    /* Pílula do tamanho e na posição do botão "Entrar" */
-    from {
-        clip-path: inset(
-            0 0 calc(100% - var(--botao-topo-altura)) calc(100% - var(--entrar-largura))
-                round calc(var(--botao-topo-altura) / 2)
-        );
-    }
-    to {
-        clip-path: inset(0 0 0 0 round var(--cartao-raio));
-    }
-}
-
-/* Etapa 3a: o título sobe de dentro da máscara, como as letras de "cactus" */
-.cartao__titulo {
-    animation: cartao-titulo-sobe var(--titulo-duracao) var(--curva-entrada) var(--conteudo-inicio)
-        both;
-}
-
-@keyframes cartao-titulo-sobe {
-    from {
-        opacity: 0;
-        transform: translateY(105%);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Etapa 3b: subtítulo, campos e botão entram em sequência pelo índice --i */
-.cartao__item {
-    animation: cartao-item-entra var(--itens-duracao) var(--curva-entrada)
-        calc(var(--itens-inicio) + var(--i) * var(--itens-intervalo)) both;
-}
-
-@keyframes cartao-item-entra {
+@keyframes boas-vindas-texto-entra {
     from {
         opacity: 0;
         transform: translateY(8px);
@@ -475,24 +430,18 @@
 }
 
 /* ==========================================================================
-   Movimento reduzido: a abertura some (css/animation.css) e logo e cartão
+   Movimento reduzido: a abertura some (css/animation.css) e logo e textos
    aparecem prontos, com o mesmo fade curto da login (login-fade, style.css).
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
     .login__logo,
-    .boas-vindas,
-    .cartao {
+    .boas-vindas {
         animation: login-fade 0.2s ease-out both;
     }
 
     .boas-vindas__linha,
     .boas-vindas__texto {
-        animation: none;
-    }
-
-    .cartao__titulo,
-    .cartao__item {
         animation: none;
     }
 }

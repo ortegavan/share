@@ -31,7 +31,7 @@
     --letras-intervalo: 70ms;
     --letras-duracao: 0.6s;
 
-    --cortina-inicio: 4s;
+    --cortina-inicio: 3.2s; /* logo depois que a última letra assenta */
     --cortina-duracao: 0.9s;
 }
 
@@ -64,7 +64,8 @@
 }
 
 /* ==========================================================================
-   Marca: símbolo + palavra (desenhos de img/icone.svg e img/logo.svg)
+   Marca: símbolo + palavra (desenhos de img/icone.svg e img/logo.svg;
+   a palavra foi separada em um path por letra)
    O .marca é centralizado pela .abertura e tem a largura do seu conteúdo.
    Quando a palavra ganha largura, o conjunto continua centralizado e o
    símbolo é empurrado para a esquerda naturalmente.
@@ -99,8 +100,8 @@
     width: calc(var(--logo-size) * 72 / 80);
 }
 
-/* Etapa 2: o quadrado azul e verde abre do centro para os lados, por cima do
-   ícone. Fora do recorte o cacto segue verde; dentro dele já é branco. */
+/* Etapa 2: o quadrado azul e verde (cantos arredondados) abre do centro para
+   os lados, por cima do ícone. Fora do recorte o cacto segue verde; dentro dele já é branco. */
 .marca__quadrado {
     width: 100%;
     animation: quadrado-abre var(--quadrado-duracao) var(--curva-cortina) var(--quadrado-inicio) both;
@@ -151,12 +152,12 @@
     overflow: hidden;
 }
 
-/* A parte do logo à direita do quadrado (182 × 80 unidades). O espaço entre
+/* A parte do logo à direita do quadrado (296 × 80 unidades). O espaço entre
    quadrado e palavra já está no desenho, dentro da coluna que cresce. O SVG
    recorta o que sai dele e funciona como máscara para as letras que sobem. */
 .marca__letras {
     display: block;
-    width: calc(var(--logo-size) * 182 / 80);
+    width: calc(var(--logo-size) * 296 / 80);
     height: var(--logo-size);
     fill: var(--cor-marca);
 }
@@ -180,6 +181,27 @@
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+/* ==========================================================================
+   Visita repetida (classe colocada pelo script no <head> do index.html)
+   A marca já aparece montada e a cortina sobe logo depois. Os tempos da
+   login derivam de --cortina-inicio, então acompanham sozinhos.
+   ========================================================================== */
+
+:root.abertura-vista {
+    --cortina-inicio: 0.3s;
+}
+
+.abertura-vista .marca__simbolo,
+.abertura-vista .marca__quadrado,
+.abertura-vista .marca__letra {
+    animation: none;
+}
+
+.abertura-vista .marca__palavra {
+    grid-template-columns: 1fr;
+    animation: none;
 }
 
 /* ==========================================================================
